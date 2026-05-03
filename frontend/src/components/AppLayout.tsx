@@ -9,7 +9,7 @@ type Props = {
 }
 
 const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/dashboard', label: 'Control Center', icon: LayoutDashboard },
   { to: '/admin/events', label: 'Events', icon: CalendarDays },
   { to: '/reports', label: 'Reports', icon: ClipboardList },
 ]
@@ -35,7 +35,7 @@ export function AppLayout({ user, onLogout }: Props) {
           <QrCode size={26} />
           <div>
             <strong>Maverick</strong>
-            <span>Event Control Hub</span>
+            <span>Event Control Center</span>
           </div>
         </div>
         <nav>
@@ -51,12 +51,21 @@ export function AppLayout({ user, onLogout }: Props) {
             <strong>{user.name}</strong>
             <span>{user.role.replace('_', ' ')}</span>
           </div>
-          <button className="icon-button" onClick={logout} title="Log out">
+          <button className="icon-button" onClick={logout} aria-label="Log out mobile">
             <LogOut size={18} />
           </button>
         </div>
       </aside>
       <main className="content">
+        <div className="mobile-topbar">
+          <div>
+            <strong>Event Control Center</strong>
+            <span>{user.name}</span>
+          </div>
+          <button className="icon-button" onClick={logout} title="Log out">
+            <LogOut size={18} />
+          </button>
+        </div>
         <Outlet />
       </main>
     </div>

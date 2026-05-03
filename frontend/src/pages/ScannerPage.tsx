@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Camera, CameraOff, ScanLine } from 'lucide-react'
+import { Camera, CameraOff, CheckCircle2, ScanLine, ShieldAlert, UserRound } from 'lucide-react'
 import type { Html5Qrcode } from 'html5-qrcode'
 import { api } from '../api/client'
 import type { DashboardSummary, ScanValidation, Stage } from '../api/client'
@@ -8,6 +8,18 @@ import { MetricCard } from '../components/MetricCard'
 import { StatusBadge } from '../components/StatusBadge'
 
 const CAMERA_READER_ID = 'maverick-camera-reader'
+
+const stageLabels: Record<Stage, string> = {
+  ENTRY: 'Entry',
+  FOOD: 'Food',
+  GOODIES: 'Goodies',
+}
+
+function successMessage(stage: Stage) {
+  if (stage === 'ENTRY') return 'Entry Verified'
+  if (stage === 'FOOD') return 'Food Claim Verified'
+  return 'Goodies Claim Verified'
+}
 
 export function ScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null)
@@ -22,6 +34,7 @@ export function ScannerPage() {
   const [cameraError, setCameraError] = useState('')
   const [lastScannedToken, setLastScannedToken] = useState('')
   const [lastActionResult, setLastActionResult] = useState('')
+  const [lastSuccessfulScan, setLastSuccessfulScan] = useState('')
   const [validating, setValidating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cameraStarting, setCameraStarting] = useState(false)
@@ -70,14 +83,20 @@ export function ScannerPage() {
     setError('')
     setMessage('')
     setLastActionResult('')
+    const scanSignature = `${qrToken}:${scanType}`
+    if (lastSuccessfulScan === scanSignature) {
+      const resultMessage = 'Duplicate scan blocked. This QR was already submitted for the selected stage in this session.'
+      setError(resultMessage)
+      setLastActionResult(resultMessage)
+      return
+    }
     setSubmitting(true)
     try {
       await api.scanStage(qrToken, scanType, stationName)
-      const resultMessage = scanType === 'ENTRY'
-        ? 'Entry check-in completed successfully. This QR cannot be checked in again.'
-        : `${scanType === 'FOOD' ? 'Food' : 'Goodies'} stage completed successfully. Duplicate scans will be blocked.`
+      const resultMessage = successMessage(scanType)
       setMessage(resultMessage)
       setLastActionResult(resultMessage)
+      setLastSuccessfulScan(scanSignature)
       const result = await api.validateScan(qrToken)
       setValidation(result)
       await refreshDashboard(result.eventId)
@@ -113,7 +132,7 @@ export function ScannerPage() {
           const scannedValue = decodedText.trim()
           setQrToken(scannedValue)
           setLastScannedToken(scannedValue)
-          setMessage('QR detected. Review the token, then validate or submit the selected scan action.')
+          setMessage('QR detected. Review the token, then validate or submit Stage Validation.')
           void stopCameraScan(false)
         },
         () => undefined,
@@ -146,12 +165,30 @@ export function ScannerPage() {
 
   return (
     <>
-      <div className="page-header"><h1>Scanner</h1></div>
+      <div className="page-header scanner-title">
+        <div>
+          <span className="eyebrow">On-site operations</span>
+          <h1>Scanner</h1>
+          <p>Validate QR passes quickly for entry, food, and goodies checkpoints.</p>
+        </div>
+      </div>
+      <div className="scanner-stage-bar">
+        {(['ENTRY', 'FOOD', 'GOODIES'] as Stage[]).map((stage) => (
+          <button
+            className={scanType === stage ? 'stage-button active' : 'stage-button'}
+            key={stage}
+            type="button"
+            onClick={() => setScanType(stage)}
+          >
+            {stageLabels[stage]}
+          </button>
+        ))}
+      </div>
       <div className="card scanner-camera">
         <div className="scanner-camera-header">
           <div>
             <h2 className="section-title" style={{ margin: 0 }}>Camera Scan</h2>
-            <p>Point the camera at the employee QR pass.</p>
+            <p>Point the camera at the participant QR pass.</p>
           </div>
           <div className="actions" style={{ marginTop: 0 }}>
             <button className="ghost-button" type="button" onClick={startCameraScan} disabled={cameraStarting || cameraActive}>
@@ -187,8 +224,8 @@ export function ScannerPage() {
               {submitting ? 'Submitting...' : 'Submit Scan'}
             </button>
           </div>
-          {message && <div className="message">{message}</div>}
-          {error && <div className="message error">{error}</div>}
+          {message && <div className="result-panel success"><CheckCircle2 size={24} /><strong>{message}</strong></div>}
+          {error && <div className="result-panel error"><ShieldAlert size={24} /><strong>{error}</strong></div>}
           {lastActionResult && (
             <div className="last-scan">
               <span>Last action result</span>
@@ -196,17 +233,24 @@ export function ScannerPage() {
             </div>
           )}
         </form>
-        <div className="card">
+        <div className="card validation-card">
           <h2 className="section-title" style={{ marginTop: 0 }}>Validation</h2>
           {validation ? (
             <div className="grid">
-              <strong>{validation.employeeName}</strong>
-              <span>{validation.employeeId}</span>
+              <div className="participant-card">
+                <UserRound size={26} />
+                <div>
+                  <strong>{validation.employeeName}</strong>
+                  <span>{validation.employeeId}</span>
+                </div>
+              </div>
               <span>{validation.eventTitle}</span>
               <StatusBadge value={validation.registrationStatus} />
-              <span>Entry: {validation.entryScanned ? 'Used' : 'Open'}</span>
-              <span>Food: {validation.foodEnabled ? (validation.foodScanned ? 'Used' : 'Open') : 'Disabled'}</span>
-              <span>Goodies: {validation.goodiesEnabled ? (validation.goodiesScanned ? 'Used' : 'Open') : 'Disabled'}</span>
+              <div className="scan-state-grid">
+                <span>Entry: {validation.entryScanned ? 'Entry Verified' : 'Open'}</span>
+                <span>Food: {validation.foodEnabled ? (validation.foodScanned ? 'Food Claim Verified' : 'Open') : 'Disabled'}</span>
+                <span>Goodies: {validation.goodiesEnabled ? (validation.goodiesScanned ? 'Goodies Claim Verified' : 'Open') : 'Disabled'}</span>
+              </div>
             </div>
           ) : (
             <span>No token validated</span>
@@ -217,10 +261,10 @@ export function ScannerPage() {
         <>
           <h2 className="section-title">Live Event Counts</h2>
           <div className="grid metrics">
-            <MetricCard label="Registered" value={summary.registeredCount} />
-            <MetricCard label="Checked in" value={summary.checkedInCount} />
-            {summary.enableFood && <MetricCard label="Food claimed" value={summary.foodClaimedCount} />}
-            {summary.enableGoodies && <MetricCard label="Goodies claimed" value={summary.goodiesClaimedCount} />}
+            <MetricCard label="Total Registrations" value={summary.registeredCount} />
+            <MetricCard label="Entry Verified" value={summary.checkedInCount} />
+            {summary.enableFood && <MetricCard label="Food Claim Verified" value={summary.foodClaimedCount} />}
+            {summary.enableGoodies && <MetricCard label="Goodies Claim Verified" value={summary.goodiesClaimedCount} />}
             <MetricCard label="Walk-ins" value={summary.walkInCount} />
           </div>
         </>

@@ -16,7 +16,7 @@ async function login(page: import('@playwright/test').Page, role: string, employ
 }
 
 async function logout(page: import('@playwright/test').Page) {
-  await page.getByTitle('Log out').click()
+  await page.getByRole('button', { name: /Log out/ }).click()
   await expect(page).toHaveURL(/\/login$/)
 }
 
@@ -65,28 +65,28 @@ test('public registration, scanner stages, dashboard, walk-in, and reports', asy
   await page.getByLabel('QR token').fill(qrToken)
   await page.getByLabel('Scan type').selectOption('ENTRY')
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message').filter({ hasText: 'Entry check-in completed successfully' })).toBeVisible()
+  await expect(page.locator('.result-panel').filter({ hasText: 'Entry Verified' })).toBeVisible()
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message.error').filter({ hasText: 'ENTRY already used for this QR' })).toBeVisible()
+  await expect(page.locator('.result-panel.error').filter({ hasText: 'Duplicate scan blocked' })).toBeVisible()
 
   await page.getByLabel('Scan type').selectOption('FOOD')
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message').filter({ hasText: 'Food stage completed successfully' })).toBeVisible()
+  await expect(page.locator('.result-panel').filter({ hasText: 'Food Claim Verified' })).toBeVisible()
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message.error').filter({ hasText: 'FOOD already used for this QR' })).toBeVisible()
+  await expect(page.locator('.result-panel.error').filter({ hasText: 'Duplicate scan blocked' })).toBeVisible()
 
   await page.getByLabel('Scan type').selectOption('GOODIES')
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message').filter({ hasText: 'Goodies stage completed successfully' })).toBeVisible()
+  await expect(page.locator('.result-panel').filter({ hasText: 'Goodies Claim Verified' })).toBeVisible()
   await logout(page)
 
   await login(page, 'HR_ADMIN', 'HR001')
   await page.getByRole('link', { name: 'Events' }).click()
   await page.getByRole('link', { name: title }).click()
-  await expect(page.locator('.metric-card').filter({ hasText: 'Registered' })).toContainText('1')
-  await expect(page.locator('.metric-card').filter({ hasText: 'Checked in' })).toContainText('1')
-  await expect(page.locator('.metric-card').filter({ hasText: 'Food claimed' })).toContainText('1')
-  await expect(page.locator('.metric-card').filter({ hasText: 'Goodies claimed' })).toContainText('1')
+  await expect(page.locator('.metric-card').filter({ hasText: 'Total Registrations' })).toContainText('1')
+  await expect(page.locator('.metric-card').filter({ hasText: 'Entry Verified' })).toContainText('1')
+  await expect(page.locator('.metric-card').filter({ hasText: 'Food Claim Verified' })).toContainText('1')
+  await expect(page.locator('.metric-card').filter({ hasText: 'Goodies Claim Verified' })).toContainText('1')
   await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible()
 
   const reportDownload = page.waitForEvent('download')
@@ -115,7 +115,7 @@ test('public registration, scanner stages, dashboard, walk-in, and reports', asy
   await page.getByLabel('QR token').fill(walkinQrToken)
   await page.getByLabel('Scan type').selectOption('ENTRY')
   await page.getByRole('button', { name: /Submit Scan/ }).click()
-  await expect(page.locator('.message').filter({ hasText: 'Entry check-in completed successfully' })).toBeVisible()
+  await expect(page.locator('.result-panel').filter({ hasText: 'Entry Verified' })).toBeVisible()
   await logout(page)
 
   await login(page, 'HR_ADMIN', 'HR001')

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { Clipboard, Download, MapPin, Ticket, UserRound } from 'lucide-react'
+import { Clipboard, Download, MapPin, ShieldCheck, Ticket, UserRound } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { PublicEvent, Registration } from '../api/client'
@@ -39,6 +39,7 @@ export function PublicRegistrationPage({ walkin = false }: Props) {
   const [message, setMessage] = useState('')
 
   const storageKey = useMemo(() => slug ? storedRegistrationKey(slug, walkin) : '', [slug, walkin])
+  const accessOpen = event ? (walkin ? event.walkinOpen : event.registrationOpen) : false
 
   useEffect(() => {
     if (!slug) return
@@ -98,7 +99,7 @@ export function PublicRegistrationPage({ walkin = false }: Props) {
         {message && <div className="message">{message}</div>}
         {event && (
           <div className="public-event-summary">
-            <span>{walkin ? 'Walk-in registration' : 'Event registration'}</span>
+            <span>{walkin ? 'Walk-in Access Link' : 'Registration Link'}</span>
             <h1>{event.title}</h1>
             <p>{event.description}</p>
             <div className="qr-pass-details">
@@ -106,10 +107,10 @@ export function PublicRegistrationPage({ walkin = false }: Props) {
               <div><Ticket size={18} /><span>{new Date(event.startTime).toLocaleString()}</span></div>
             </div>
             <div className="actions">
-              <span className={`badge ${walkin ? (event.walkinOpen ? 'badge-open' : 'badge-completed') : (event.registrationOpen ? 'badge-open' : 'badge-completed')}`}>
-                {walkin ? (event.walkinOpen ? 'Walk-ins open' : 'Walk-ins closed') : (event.registrationOpen ? 'Registration open' : 'Registration closed')}
+              <span className={`badge ${accessOpen ? 'badge-open' : 'badge-completed'}`}>
+                {accessOpen ? (walkin ? 'Walk-in open' : 'Registration open') : (walkin ? 'Walk-in closed' : 'Registration closed')}
               </span>
-              <span className="badge">ENTRY{event.enableFood ? ' + FOOD' : ''}{event.enableGoodies ? ' + GOODIES' : ''}</span>
+              <span className="badge">Stage Validation: ENTRY{event.enableFood ? ' + FOOD' : ''}{event.enableGoodies ? ' + GOODIES' : ''}</span>
             </div>
           </div>
         )}
@@ -135,7 +136,7 @@ export function PublicRegistrationPage({ walkin = false }: Props) {
               </div>
             </div>
             <div className="qr-token">{registration.qrToken}</div>
-            <p className="pass-instruction">Show this QR pass at each enabled event stage. Keep the token private.</p>
+            <p className="pass-instruction"><ShieldCheck size={18} />Save this QR pass. You need it at the event.</p>
             <div className="actions">
               <button className="ghost-button" type="button" onClick={copyToken}><Clipboard size={18} />Copy Token</button>
               <button className="button" type="button" onClick={downloadQr}><Download size={18} />Download QR</button>
@@ -143,11 +144,14 @@ export function PublicRegistrationPage({ walkin = false }: Props) {
           </div>
         ) : (
           <form className="card form-grid public-form" onSubmit={submit}>
+            {event && !accessOpen && (
+              <div className="message error span-2">{walkin ? 'Walk-in access is closed for this event.' : 'Registration closed for this event.'}</div>
+            )}
             <label>Employee ID<input required value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })} /></label>
             <label>Employee name<input required value={form.employeeName} onChange={(e) => setForm({ ...form, employeeName: e.target.value })} /></label>
             <label className="span-2">Employee email<input required type="email" value={form.employeeEmail} onChange={(e) => setForm({ ...form, employeeEmail: e.target.value })} /></label>
             <div className="actions span-2">
-              <button className="button" type="submit" disabled={submitting || !event}>
+              <button className="button" type="submit" disabled={submitting || !event || !accessOpen}>
                 {submitting ? 'Submitting...' : walkin ? 'Register Walk-in' : 'Register'}
               </button>
             </div>

@@ -1,8 +1,14 @@
-export function MetricCard({ label, value }: { label: string; value: number | string }) {
+import type { ReactNode } from 'react'
+
+export function MetricCard({ label, value, detail, icon }: { label: string; value: number | string; detail?: string; icon?: ReactNode }) {
   return (
     <div className="metric-card">
-      <span>{label}</span>
+      <div className="metric-card-top">
+        <span>{label}</span>
+        {icon}
+      </div>
       <strong>{value}</strong>
+      {detail && <small>{detail}</small>}
     </div>
   )
 }

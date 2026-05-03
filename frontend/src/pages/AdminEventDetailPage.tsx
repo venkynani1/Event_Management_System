@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { CheckCircle2, Clipboard, Download, PauseCircle, PlayCircle } from 'lucide-react'
+import { CheckCircle2, Clipboard, Download, Link2, PauseCircle, PlayCircle, QrCode, TicketCheck, UsersRound } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { EventItem, Registration, ReportSummary } from '../api/client'
@@ -100,12 +100,18 @@ export function AdminEventDetailPage() {
 
   return (
     <>
-      <div className="page-header">
+      <div className="page-header event-detail-header">
         <div>
+          <span className="eyebrow">Event operations</span>
           <h1>{event.title}</h1>
-          <div className="actions">
+          <p>{event.venue} · {new Date(event.startTime).toLocaleString()}</p>
+          <div className="status-strip">
             <StatusBadge value={event.status} />
-            <span className="badge">ENTRY{event.enableFood ? ' + FOOD' : ''}{event.enableGoodies ? ' + GOODIES' : ''}</span>
+            <span className={event.registrationOpen ? 'badge badge-open' : 'badge badge-completed'}>{event.registrationOpen ? 'Registration open' : 'Registration closed'}</span>
+            <span className={event.walkinAllowed && event.walkinOpen ? 'badge badge-walkin' : 'badge badge-completed'}>
+              {event.walkinAllowed ? (event.walkinOpen ? 'Walk-in open' : 'Walk-in closed') : 'Walk-in disabled'}
+            </span>
+            <span className="badge">Stage Validation: ENTRY{event.enableFood ? ' + FOOD' : ''}{event.enableGoodies ? ' + GOODIES' : ''}</span>
           </div>
         </div>
         <div className="actions">
@@ -124,41 +130,43 @@ export function AdminEventDetailPage() {
       {error && <div className="message error">{error}</div>}
       {message && <div className="message">{message}</div>}
 
-      <div className="card">
-        <strong>{event.venue}</strong>
-        <p>{event.description}</p>
-        <div className="grid metrics">
+      <div className="card event-overview">
+        <div>
+          <span className="eyebrow">Event brief</span>
+          <p>{event.description || 'No description provided.'}</p>
+        </div>
+        <div className="grid metrics compact-metrics">
           <MetricCard label="Capacity" value={event.maxCapacity} />
+          <MetricCard label="Event Status" value={event.status} />
           <MetricCard label="Registration" value={event.registrationOpen ? 'Open' : 'Closed'} />
           <MetricCard label="Walk-ins" value={event.walkinAllowed ? (event.walkinOpen ? 'Open' : 'Closed') : 'Disabled'} />
-          <MetricCard label="Start" value={new Date(event.startTime).toLocaleString()} />
         </div>
       </div>
 
       {summary && (
         <div className="grid metrics" style={{ marginTop: 16 }}>
-          <MetricCard label="Registered" value={summary.registeredCount} />
-          <MetricCard label="Normal registrations" value={summary.normalRegistrationCount} />
+          <MetricCard label="Total Registrations" value={summary.registeredCount} icon={<UsersRound size={18} />} />
+          <MetricCard label="Normal Registrations" value={summary.normalRegistrationCount} />
           <MetricCard label="Walk-ins" value={summary.walkInCount} />
-          <MetricCard label="Checked in" value={summary.checkedInCount} />
-          <MetricCard label="Pending check-ins" value={summary.pendingCheckInCount} />
-          {event.enableFood && <MetricCard label="Food claimed" value={summary.foodClaimedCount} />}
-          {event.enableGoodies && <MetricCard label="Goodies claimed" value={summary.goodiesClaimedCount} />}
+          <MetricCard label="Entry Verified" value={summary.checkedInCount} icon={<TicketCheck size={18} />} />
+          <MetricCard label="Pending Entry" value={summary.pendingCheckInCount} />
+          {event.enableFood && <MetricCard label="Food Claim Verified" value={summary.foodClaimedCount} icon={<CheckCircle2 size={18} />} />}
+          {event.enableGoodies && <MetricCard label="Goodies Claim Verified" value={summary.goodiesClaimedCount} icon={<CheckCircle2 size={18} />} />}
         </div>
       )}
 
-      <h2 className="section-title">Public Links</h2>
+      <h2 className="section-title">Access Links</h2>
       <div className="grid link-grid">
-        <div className="card">
-          <strong>Registration link</strong>
+        <div className="card link-card">
+          <div className="card-title-row"><Link2 size={18} /><strong>Registration Link</strong></div>
           <div className="qr-token">{registrationLink}</div>
           <div className="actions">
             <button className="ghost-button" type="button" onClick={() => copy(registrationLink, 'Registration link')}><Clipboard size={18} />Copy Registration Link</button>
           </div>
         </div>
         {event.walkinAllowed && event.walkinSlug && (
-          <div className="card">
-            <strong>Walk-in link and QR</strong>
+          <div className="card link-card">
+            <div className="card-title-row"><QrCode size={18} /><strong>Walk-in Access Link</strong></div>
             <div className="qr-code-panel walkin-qr-panel">
               <QRCodeCanvas id="walkin-qr" value={walkinLink} size={180} includeMargin />
             </div>

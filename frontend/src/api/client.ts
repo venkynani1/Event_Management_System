@@ -117,6 +117,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 const AUTH_KEY = 'mech.mockToken'
 const USER_KEY = 'mech.user'
 
+function friendlyError(message: string) {
+  if (/capacity/i.test(message)) return 'Capacity reached. Registration is no longer available for this event.'
+  if (/registration.*closed|not open|outside/i.test(message)) return 'Registration closed for this event.'
+  if (/already used|duplicate/i.test(message)) return 'Duplicate scan blocked.'
+  return message
+}
+
 export function getMockToken() {
   return localStorage.getItem(AUTH_KEY)
 }
@@ -151,7 +158,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (response.status === 403) {
       throw new Error(body.message ?? 'You do not have permission to perform this action.')
     }
-    throw new Error(body.message ?? 'Request failed')
+    throw new Error(friendlyError(body.message ?? 'Request failed'))
   }
   return response.json() as Promise<T>
 }
@@ -170,7 +177,7 @@ async function requestBlob(path: string): Promise<Blob> {
     if (response.status === 403) {
       throw new Error(body.message ?? 'You do not have permission to download this report.')
     }
-    throw new Error(body.message ?? 'Request failed')
+    throw new Error(friendlyError(body.message ?? 'Request failed'))
   }
   return response.blob()
 }

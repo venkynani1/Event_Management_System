@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Save } from 'lucide-react'
+import { CalendarClock, Save, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 
@@ -51,24 +51,36 @@ export function CreateEventPage() {
 
   return (
     <>
-      <div className="page-header"><h1>Create Event</h1></div>
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">Event setup</span>
+          <h1>Create Event</h1>
+          <p>Configure the public registration window, Walk-in Access Link, and Stage Validation flow.</p>
+        </div>
+      </div>
       {error && <div className="message error">{error}</div>}
-      <form className="card form-grid" onSubmit={submit}>
-        <label>Title<input required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /></label>
-        <label>Venue<input required value={form.venue} onChange={(event) => setForm({ ...form, venue: event.target.value })} /></label>
-        <label className="span-2">Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-        <label>Start<input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label>
-        <label>End<input type="datetime-local" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label>
-        <label>Registration opens<input type="datetime-local" value={form.registrationOpenAt} onChange={(event) => setForm({ ...form, registrationOpenAt: event.target.value })} /></label>
-        <label>Registration closes<input type="datetime-local" value={form.registrationCloseAt} onChange={(event) => setForm({ ...form, registrationCloseAt: event.target.value })} /></label>
-        <label>Capacity<input type="number" min="1" value={form.maxCapacity} onChange={(event) => setForm({ ...form, maxCapacity: Number(event.target.value) })} /></label>
-        <label>Walk-ins<select value={String(form.walkinAllowed)} onChange={(event) => setForm({ ...form, walkinAllowed: event.target.value === 'true' })}><option value="true">Allowed</option><option value="false">Closed</option></select></label>
-        <label>Registration state<select value={String(form.registrationOpen)} onChange={(event) => setForm({ ...form, registrationOpen: event.target.value === 'true' })}><option value="true">Open</option><option value="false">Closed</option></select></label>
-        <label>Walk-in state<select value={String(form.walkinOpen)} onChange={(event) => setForm({ ...form, walkinOpen: event.target.value === 'true' })}><option value="true">Open</option><option value="false">Closed</option></select></label>
-        <label className="span-2">Walk-in closes<input type="datetime-local" value={form.walkinCloseAt} onChange={(event) => setForm({ ...form, walkinCloseAt: event.target.value })} disabled={!form.walkinAllowed} /></label>
-        <label className="span-2">Validation stages<select value={stageMode} onChange={(event) => setStageMode(event.target.value as StageMode)}><option value="ENTRY">ENTRY only</option><option value="ENTRY_FOOD">ENTRY + FOOD</option><option value="ENTRY_FOOD_GOODIES">ENTRY + FOOD + GOODIES</option></select></label>
+      <form className="form-sections" onSubmit={submit}>
+        <section className="card form-grid">
+          <div className="form-section-title span-2"><CalendarClock size={18} /><strong>Event details</strong></div>
+          <label>Title<input required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /></label>
+          <label>Venue<input required value={form.venue} onChange={(event) => setForm({ ...form, venue: event.target.value })} /></label>
+          <label className="span-2">Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+          <label>Start<input type="datetime-local" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label>
+          <label>End<input type="datetime-local" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label>
+        </section>
+        <section className="card form-grid">
+          <div className="form-section-title span-2"><ShieldCheck size={18} /><strong>Registration controls</strong></div>
+          <label>Registration opens<input type="datetime-local" value={form.registrationOpenAt} onChange={(event) => setForm({ ...form, registrationOpenAt: event.target.value })} /></label>
+          <label>Registration closes<input type="datetime-local" value={form.registrationCloseAt} onChange={(event) => setForm({ ...form, registrationCloseAt: event.target.value })} /></label>
+          <label>Capacity<input type="number" min="1" value={form.maxCapacity} onChange={(event) => setForm({ ...form, maxCapacity: Number(event.target.value) })} /></label>
+          <label>Registration state<select value={String(form.registrationOpen)} onChange={(event) => setForm({ ...form, registrationOpen: event.target.value === 'true' })}><option value="true">Open</option><option value="false">Closed</option></select></label>
+          <label>Walk-ins<select value={String(form.walkinAllowed)} onChange={(event) => setForm({ ...form, walkinAllowed: event.target.value === 'true' })}><option value="true">Allowed</option><option value="false">Disabled</option></select></label>
+          <label>Walk-in state<select value={String(form.walkinOpen)} onChange={(event) => setForm({ ...form, walkinOpen: event.target.value === 'true' })} disabled={!form.walkinAllowed}><option value="true">Open</option><option value="false">Closed</option></select></label>
+          <label>Walk-in closes<input type="datetime-local" value={form.walkinCloseAt} onChange={(event) => setForm({ ...form, walkinCloseAt: event.target.value })} disabled={!form.walkinAllowed} /></label>
+          <label>Validation stages<select value={stageMode} onChange={(event) => setStageMode(event.target.value as StageMode)}><option value="ENTRY">ENTRY only</option><option value="ENTRY_FOOD">ENTRY + FOOD</option><option value="ENTRY_FOOD_GOODIES">ENTRY + FOOD + GOODIES</option></select></label>
+        </section>
         <div className="actions span-2">
-          <button className="button" type="submit" disabled={saving}><Save size={18} />{saving ? 'Saving...' : 'Save'}</button>
+          <button className="button" type="submit" disabled={saving}><Save size={18} />{saving ? 'Saving...' : 'Save Event'}</button>
         </div>
       </form>
     </>

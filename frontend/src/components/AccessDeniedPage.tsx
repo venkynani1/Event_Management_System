@@ -8,7 +8,7 @@ export function AccessDeniedPage({ user }: { user: Employee }) {
       <ShieldAlert size={36} />
       <div>
         <h1>Access denied</h1>
-        <p>Your mock account is signed in as {user.employeeCode}. This route is not available for that role.</p>
+        <p>Your mock account is signed in as {user.employeeCode}. This workspace area is not available for that role.</p>
       </div>
       <Link className="button" to="/">Go to my home</Link>
     </div>
