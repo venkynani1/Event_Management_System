@@ -90,7 +90,7 @@ Frontend API URL is read from `VITE_API_BASE_URL`. Copy `frontend/.env.example` 
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Backend CORS origins are configured with `app.cors.allowed-origins`.
+Backend CORS allows `http://localhost:5173` for local development and Vercel frontend deployments under `https://*.vercel.app`.
 
 ## Deploy Frontend to Vercel
 
@@ -113,8 +113,6 @@ VITE_API_BASE_URL=https://YOUR_BACKEND_URL
 
 `frontend/vercel.json` rewrites all routes to `index.html`, so React Router routes such as `/register/:slug`, `/walkin/:slug`, `/scanner`, and `/admin/events/:id` continue to work after a browser refresh.
 
-After Vercel deploys, copy the deployed frontend URL and set it as `FRONTEND_ORIGIN` on the backend.
-
 ## Deploy Backend to Render, Azure, Railway, or Similar
 
 The backend is a Spring Boot service and reads deployment configuration from environment variables.
@@ -125,14 +123,13 @@ Required environment variables:
 DB_URL=jdbc:postgresql://YOUR_DB_HOST:5432/YOUR_DB_NAME?sslmode=require
 DB_USERNAME=YOUR_DB_USERNAME
 DB_PASSWORD=YOUR_DB_PASSWORD
-FRONTEND_ORIGIN=https://YOUR_VERCEL_APP.vercel.app
 PORT=8080
 ```
 
 Notes:
 
 - Many hosts, including Render and Railway, inject `PORT` automatically. The app reads it through `server.port=${PORT:8080}`.
-- `FRONTEND_ORIGIN` must be the exact deployed Vercel origin, without a trailing slash.
+- CORS is configured in `CorsConfig` for local Vite development and Vercel production/preview deployments.
 - `spring.jpa.hibernate.ddl-auto=update` is enabled for demo deployments so tables are created/updated automatically.
 - Health check endpoint: `GET /api/health`.
 
